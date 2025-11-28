@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1017401228460",
+    "project_id": "plp-final-project-e4450",
+    "storage_bucket": "plp-final-project-e4450.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1017401228460:android:d796f750b1d87b62ad7309",
+        "android_client_info": {
+          "package_name": "com.example.eduflash"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyClEG5caPeJqhtbBJarJmba0moL0kaUazE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
