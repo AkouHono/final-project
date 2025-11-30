@@ -16,12 +16,13 @@ class _LoginPageState extends State<LoginPage> {
 
   String errorMessage = "";
 
+  bool _obscurePassword = true;   // 👈 ADDED
+
   bool isStrongPassword(String password) {
     final regex = RegExp(r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$');
     return regex.hasMatch(password);
   }
 
-  // Human-friendly error messages
   String getFriendlyError(String code) {
     switch (code) {
       case "invalid-email":
@@ -46,15 +47,11 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: Stack(
         children: [
-
-          // Background overlay
           Container(color: Colors.black54),
 
           Center(
             child: SingleChildScrollView(
               child: Container(
-
-                /// 🔥 Square card size
                 width: 420,
                 height: 500,
 
@@ -70,24 +67,17 @@ class _LoginPageState extends State<LoginPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-
-                        // Logo
-                        Image.asset(
-                          "assets/logo.png",
-                          height: 100,
-                          fit: BoxFit.contain,
-                        ),
+                        Image.asset("assets/logo.png",
+                            height: 100, fit: BoxFit.contain),
 
                         SizedBox(height: 10),
 
-                        Text(
-                          "EduFlash",
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.indigo,
-                          ),
-                        ),
+                        Text("EduFlash",
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.indigo,
+                            )),
 
                         SizedBox(height: 20),
 
@@ -102,19 +92,33 @@ class _LoginPageState extends State<LoginPage> {
 
                         SizedBox(height: 12),
 
-                        // PASSWORD
+                        // PASSWORD (WITH SHOW/HIDE)
                         TextField(
                           controller: passwordController,
-                          obscureText: true,
+                          obscureText: _obscurePassword, // 👈 UPDATED
                           decoration: InputDecoration(
                             labelText: "Password",
                             prefixIcon: Icon(Icons.lock_outline),
+
+                            // 👇 ADDED SHOW/HIDE ICON
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                color: Colors.grey,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                            ),
                           ),
                         ),
 
                         SizedBox(height: 8),
 
-                        // Forgot password
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
@@ -127,9 +131,9 @@ class _LoginPageState extends State<LoginPage> {
                                 return;
                               }
 
-                              String? result = await auth.resetPassword(
-                                emailController.text.trim(),
-                              );
+                              String? result =
+                                  await auth.resetPassword(
+                                      emailController.text.trim());
 
                               setState(() {
                                 errorMessage =
@@ -141,7 +145,6 @@ class _LoginPageState extends State<LoginPage> {
 
                         SizedBox(height: 10),
 
-                        // ERROR BOX
                         if (errorMessage.isNotEmpty)
                           Container(
                             padding: EdgeInsets.all(12),
@@ -149,7 +152,8 @@ class _LoginPageState extends State<LoginPage> {
                             decoration: BoxDecoration(
                               color: Colors.red.shade50,
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.red.shade300),
+                              border:
+                                  Border.all(color: Colors.red.shade300),
                             ),
                             child: Row(
                               children: [
@@ -192,8 +196,8 @@ class _LoginPageState extends State<LoginPage> {
                               final user =
                                   FirebaseAuth.instance.currentUser;
 
-                              // Check email verification
-                              if (user != null && !user.emailVerified) {
+                              if (user != null &&
+                                  !user.emailVerified) {
                                 await user.sendEmailVerification();
 
                                 setState(() {
@@ -225,7 +229,6 @@ class _LoginPageState extends State<LoginPage> {
 
                         SizedBox(height: 15),
 
-                        // Create account
                         TextButton(
                           child: Text("Create an account",
                               style: TextStyle(color: Colors.indigo)),
@@ -237,7 +240,6 @@ class _LoginPageState extends State<LoginPage> {
                             );
                           },
                         ),
-
                       ],
                     ),
                   ),

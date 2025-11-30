@@ -1,40 +1,58 @@
 import 'package:flutter/material.dart';
 import '../services/firestore_service.dart';
-import 'add_flashcard.dart';
 import 'review_flashcards.dart';
+import 'add_flashcard.dart';
 
 class SubjectFlashcardsPage extends StatelessWidget {
   final String subjectId;
   final String title;
-  final firestore = FirestoreService();
 
   SubjectFlashcardsPage({required this.subjectId, required this.title});
+
+  final firestore = FirestoreService();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xfff7f0ff),
+      backgroundColor: const Color(0xfff7f0ff),
 
       appBar: AppBar(
-        title: Text(title, style: TextStyle(color: Colors.deepPurple)),
-        backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: IconThemeData(color: Colors.deepPurple),
+        backgroundColor: Colors.transparent,
+        title: Text(
+          title,
+          style: const TextStyle(color: Colors.deepPurple),
+        ),
+        iconTheme: const IconThemeData(color: Colors.deepPurple),
+
         actions: [
-          IconButton(
-            tooltip: "Start Review",
-            icon: Icon(Icons.play_circle_fill, color: Colors.deepPurple, size: 30),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ReviewFlashcardsPage(
-                    subjectId: subjectId,
-                    title: title,
-                  ),
+          Container(
+            margin: const EdgeInsets.only(right: 12),
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurple,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
                 ),
-              );
-            },
+              ),
+              icon: const Icon(Icons.play_arrow, size: 20, color: Colors.white),
+              label: const Text(
+                "Review",
+                style: TextStyle(color: Colors.white, fontSize: 14),
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ReviewFlashcardsPage(
+                      subjectId: subjectId,
+                      title: title,
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -43,91 +61,137 @@ class SubjectFlashcardsPage extends StatelessWidget {
         stream: firestore.getFlashcards(subjectId),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
 
-          final flashcards = snapshot.data!.docs;
+          final cards = snapshot.data!.docs;
 
-          return Column(
-            children: [
-              if (flashcards.isEmpty)
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      "No flashcards yet.\nTap + to add one!",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-                )
-              else
-                Expanded(
-                  child: ListView.builder(
-                    padding: EdgeInsets.all(12),
-                    itemCount: flashcards.length,
-                    itemBuilder: (context, index) {
-                      final card = flashcards[index];
+          // Empty state
+          if (cards.isEmpty) {
+            return const Center(
+              child: Text(
+                "No flashcards yet.\nTap + to add your first one!",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: Colors.black54),
+              ),
+            );
+          }
 
-                      return Card(
-                        elevation: 3,
-                        margin: EdgeInsets.only(bottom: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: ListTile(
-                          title: Text(card['question']),
-                          subtitle: Text(
-                            card['answer'],
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+          // List of flashcards
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: cards.length,
+            itemBuilder: (context, index) {
+              final card = cards[index];
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                child: Material(
+                  elevation: 3,
+                  borderRadius: BorderRadius.circular(16),
+                  child:ListTile(
+  tileColor: Colors.white,
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(16),
+  ),
+
+  // SHOW FULL FLASHCARD ON TAP
+  onTap: () {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20)),
+        title: Text(card['question']),
+        content: Text(card['answer']),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Close"),
+          ),
+        ],
+      ),
+    );
+  },
+
+  title: Text(
+    card['question'],
+    style: const TextStyle(
+      fontWeight: FontWeight.bold,
+      fontSize: 16,
+    ),
+  ),
+
+  subtitle: Text(
+    card['answer'],
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    style: const TextStyle(color: Colors.black54),
+  ),
+
+  trailing: Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      // EDIT BUTTON
+      IconButton(
+        icon: const Icon(Icons.edit, color: Colors.blue),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AddFlashcardPage(
+                subjectId: subjectId,
+                flashcardId: card.id,
+                question: card['question'],
+                answer: card['answer'],
+                isEdit: true,
+              ),
+            ),
+          );
+        },
+      ),
+
+      // DELETE BUTTON
+      IconButton(
+        icon: const Icon(Icons.delete, color: Colors.red),
+        onPressed: () async {
+          bool confirm = await showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text("Delete Flashcard"),
+              content: const Text("Are you sure you want to delete this flashcard?"),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text("Cancel")),
+                TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text("Delete",
+                        style: TextStyle(color: Colors.red))),
+              ],
+            ),
+          );
+
+          if (confirm) {
+            firestore.deleteFlashcard(subjectId, card.id);
+          }
+        },
+      ),
+    ],
+  ),
+),
+
                 ),
-
-              // START REVIEW BUTTON
-              if (flashcards.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Center(
-                    child: ElevatedButton.icon(
-                      icon: Icon(Icons.play_arrow, color: Colors.white),
-                      label: Text(
-                        "Start Review",
-                        style: TextStyle(color: Colors.white, fontSize: 18),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.deepPurple,
-                        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ReviewFlashcardsPage(
-                              subjectId: subjectId,
-                              title: title,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-            ],
+              );
+            },
           );
         },
       ),
 
       floatingActionButton: FloatingActionButton.extended(
-        icon: Icon(Icons.add),
-        label: Text("Add Flashcard"),
         backgroundColor: Colors.deepPurple,
+        icon: const Icon(Icons.add),
+        label: const Text("Add Flashcard"),
         onPressed: () {
           Navigator.push(
             context,
